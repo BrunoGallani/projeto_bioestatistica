@@ -1,0 +1,13 @@
+\usepackage{tcolorbox}
+\usepackage{etoolbox}
+\usepackage{framed}
+
+\tcbuselibrary{skins} % Habilita recursos extras do tcolorbox
+
+% Configuração para blocos de código (verbatim)
+\BeforeBeginEnvironment{verbatim}{%
+	\begin{tcolorbox}[colback=gray!5!white, colframe=gray!80!black, arc=3pt, boxrule=0.1pt]%
+	}
+	\AfterEndEnvironment{verbatim}{%
+	\end{tcolorbox}%
+}

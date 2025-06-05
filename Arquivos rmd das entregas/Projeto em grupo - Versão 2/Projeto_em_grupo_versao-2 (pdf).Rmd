@@ -1,0 +1,801 @@
+---
+title: ""
+author: ""
+output:
+  pdf_document:
+    keep_tex: true
+    includes:
+      in_header: preambulo.tex
+    highlight: default
+    extra_dependencies: ["float"]
+header-includes:
+  - \setcounter{page}{2}
+  - \usepackage{fvextra}
+  - \usepackage{tcolorbox}
+  - \tcbuselibrary{breakable}
+  - \usepackage{xcolor}
+  - |
+    \DefineVerbatimEnvironment{verbatim}{Verbatim}{
+      breaklines=true,
+      breakanywhere=true,
+      fontsize=\small}
+editor_options: 
+  chunk_output_type: console
+---
+\begin{center}
+    {\LARGE \bfseries Projeto em grupo - Versão 2}
+    
+\end{center}
+
+## Informações iniciais
+
+- **Título do artigo:** *“Optimizing self-organized study orders: combining refutations and metacognitive prompts improves the use of interleaved practice”*
+
+- **Link do artigo:** \textcolor{blue}{\underline{\url{https://www.nature.com/articles/s41539-024-00245-7\#Sec9}}}
+
+- **Dados:** \textcolor{blue}{\underline{\url{https://osf.io/6vm7z/?view_only=d9caf564f48b4c4f8166b3c2e38c1cf4}}}
+
+- **Dicionário dos dados:** \textcolor{blue}{\underline{\url{https://dataverse.nl/dataset.xhtml?persistentId=doi:10.34894/U9YSER}}}
+
+## Contextualização
+
+O artigo discute sobre a organização de estudos durante a aprendizagem por categorias e suas práticas: a prática intercalada (*interleaved practice*), que consiste na alternância de estudo entre diferentes categorias/conceitos, e a prática por blocos (*blocked practice*), que consiste no estudo de uma categoria/conceito por vez.
+
+A prática de estudo por blocos costuma ser frequentemente escolhida pelos estudantes, em detrimento da prática intercalada, mas pesquisas recentes passaram a informar que a prática intercalada é uma estratégia mais efetiva. Nesse contexto, diversos estudos são realizados a partir de testes com estudantes, testes esses que predefinem uma ordem de estudos. Mas nunca houve um teste que fosse realizado de forma que os próprios estudantes definissem uma ordem de estudos para eles mesmos.
+
+Nesse sentido, foi realizado neste artigo um experimento com 91 estudantes universitários, que consistiu nas seguintes etapas:
+
+-   Divisão dos estudantes em grupos controle e teste;
+
+-   Exposição dos estudantes do grupo de teste a intervenções: que consistiram na leitura de textos e avisos metacognitivos que destacam a superioridade da prática intercalada de estudos em detrimento à prática por blocos, ou seja, refutações do que comumente acreditam.
+
+## Análises realizadas/resultados obtidos
+
+Para analisar os dados obtidos na pesquisa, foram elaboradas três RQs (*good research questions*):
+
+### *RQ1. Learning strategy beliefs across time and between conditions*
+
+> Como a crença dos participantes nas diferentes estratégias de aprendizado (em blocos/intercalada) variou com o tempo e entre as condições?
+
+Esta RQ avaliou a influência da intervenção das crenças nas estratégias de aprendizagem (intercalada e por blocos). Para isso, foram aplicados três testes estatísticos:
+
+- **Teste t para amostras pareadas**: para analisar a crença pré existente dos participantes;
+
+- **ANOVA mista**: para observar a variância ao longo do tempo, separando por grupo intervenção e grupo controle;
+
+- **Comparação pareada com Bonferroni**.
+
+Para responder à cada uma das RQs, primeiro faremos um *setup* inicial (importação de bibliotecas necessárias e leitura dos dadoss).
+
+```{r message=FALSE, warning=FALSE}
+# Importação de bibliotecas
+library(afex)
+library(emmeans)
+
+# Leitura dos dados
+url_csv = paste0(
+  "https://docs.google.com/spreadsheets/d/",
+  "1Fv6oRXMtoDKcbS19awogukMpTLr5utXLJ3aw8GXzGbA/",
+  "export?format=csv&gid=2113233241")
+
+dados = read.csv(file = url_csv, sep=",", header=TRUE)
+```
+
+Agora, seguindo para a aplicação dos testes:
+
+**1.1 - Teste t para amostras pareadas**
+
+```{r}
+# RQ1 - Crenças pré existentes
+
+# Percepção efetiva *blocked practice*
+PE_B1 = dados$PE_B1
+
+# Média e desvio padrão
+c(floor(mean(PE_B1)*100)/100, round(sd(PE_B1), 2))
+
+# A amostra não passou no teste de normalidade
+shapiro.test(PE_B1)
+
+# Observando a distribuição
+hist(PE_B1, prob=TRUE)
+
+# Percepção efetiva *interleaved practice*
+PE_I1 = dados$PE_I1
+
+# Média e desvio padrão
+c(round(mean(PE_I1), 3), round(sd(PE_I1), 2))
+
+# A amostra não passou no teste de normalidade
+shapiro.test(PE_I1)
+
+# Observando a distribuição
+hist(PE_I1, prob=TRUE)
+
+# teste t pareado
+
+# H0: mu(PE_B1) = mu(PE_I1)
+# Ha: mu(PE_B1) != mu(PE_I1)
+t.test(PE_B1, PE_I1, mu=0, paired=TRUE)
+```
+
+Pelos resultados do *teste t*, a hipótese nula é rejeitada, devido à obtenção de um **p-valor** ($0.020$) menor que $\alpha = 0.05$.
+
+**1.2 - ANOVA: variância ao longo do tempo - usando o pacote `afex`**
+
+Como a crença nas diferentes técnicas de estudo variou com o tempo/condição?
+
+**Setup**
+
+```{r message=FALSE, warning=FALSE}
+# Transformação de dados
+dados_limpos = na.omit(dados)
+
+dados_ANOVA_RQ1 = data.frame(
+    rep(dados_limpos$DM08_01, 3),
+    c(rep('pre-intervention', 89),
+      rep('post-intervention', 89), rep('after a delay', 89)),
+    c(dados_limpos$PE_B1, dados_limpos$PE_B2, dados_limpos$PE_B3),
+    c(dados_limpos$PE_I1, dados_limpos$PE_I2, dados_limpos$PE_I3),
+    rep(dados_limpos$Condition, 3)
+)
+colnames(dados_ANOVA_RQ1) <- c("id", "tempo", "percep_blocked",
+                               "percep_interleaved", "condicao")
+
+dados_ANOVA_RQ1_filtro_grupo_intervencao = (
+  dados_ANOVA_RQ1[dados_ANOVA_RQ1$condicao == "Full", ])
+
+dados_ANOVA_RQ1_filtro_grupo_controle = (
+  dados_ANOVA_RQ1[dados_ANOVA_RQ1$condicao == "Control", ])
+
+# Visualização das 15 primeiras linhas dataframe transformado
+
+head(dados_ANOVA_RQ1, 15)
+```
+
+**1.2.1 - Criação dos modelos ANOVA**
+
+```{r}
+# Modelos ANOVA -- os valores nulos foram desconsiderados
+
+# Variáveis preditoras
+# tempo ; condicao
+
+# Variáveis resposta
+# percep_blocked; percep_interleaved
+
+# Função para rodar ANOVA mista
+rodar_anova <- function(dv, dados, between = TRUE) {
+  if (between) {
+    aov_ez(id = "id", dv = dv, data = dados, within = "tempo",
+           between = "condicao")
+  } else {
+    aov_ez(id = "id", dv = dv, data = dados, within = "tempo")
+  }
+}
+
+# Modelos gerais (com fator entre-sujeitos)
+modelo_blocked <- rodar_anova("percep_blocked", dados_ANOVA_RQ1)
+modelo_interleaved <- rodar_anova("percep_interleaved", dados_ANOVA_RQ1)
+
+# Modelos separados por grupo (sem fator entre-sujeitos)
+modelo_blocked_interv <- rodar_anova("percep_blocked",
+                                     dados_ANOVA_RQ1_filtro_grupo_intervencao,
+                                     between = FALSE)
+
+modelo_blocked_control <- rodar_anova("percep_blocked",
+                                      dados_ANOVA_RQ1_filtro_grupo_controle,
+                                      between = FALSE)
+
+modelo_interleaved_interv <- rodar_anova(
+  "percep_interleaved",
+  dados_ANOVA_RQ1_filtro_grupo_intervencao,
+  between = FALSE)
+
+modelo_interleaved_control <- rodar_anova(
+  "percep_interleaved",
+  dados_ANOVA_RQ1_filtro_grupo_controle,
+  between = FALSE)
+```
+
+**1.2.2 - Outputs dos modelos**
+
+-   **Prática de estudos em bloco**
+
+```{r}
+# ANOVA mista - Análise da percepção dos participantes referente à prática
+# de estudos em bloco
+
+# Tempo: possui efeitosignificativo (p-valor < 0.05)
+# Condição: não possui efeito significativo (p-valor > 0.05)
+# Interação tempo x condição: possui efeito significativo (p-valor < 0.05)
+
+modelo_blocked
+
+# ANOVA mista - Análise da percepção dos participantes referente à prática
+# de estudos em bloco, olhando apenas para o grupo de intervenção
+
+# H0: a influência do tempo, nos participantes do grupo de intervenção,
+# na percepção de eficácia da prática de estudos em bloco é dada ao acaso
+
+# Ha: nos participantes do grupo de intervenção, o tempo teve influência
+# na percepção de eficácia da prática de estudos em bloco
+
+# p-valor < 0.05: rejeição da hipótese nula
+modelo_blocked_interv
+
+# ANOVA mista - Análise da percepção dos participantes referente à prática
+# de estudos em bloco, olhando apenas para o grupo controle
+
+# H0: a influência do tempo, nos participantes do grupo controle,
+# na percepção de eficácia da prática de estudos em bloco é dada ao acaso
+
+# Ha: nos participantes do grupo controle, o tempo teve influência
+# na percepção de eficácia da prática de estudos em bloco
+
+# p-valor > 0.05: aceitação da hipótese nula
+
+modelo_blocked_control
+```
+
+- **Prática de estudos intercalada**
+
+```{r}
+# ANOVA mista - Análise da percepção dos participantes referente à prática
+# de estudos intercalada
+
+# Tempo: possui efeito significativo (p-valor < 0.05)
+# Condição: possui efeito significativo (p-valor < 0.05)
+# Interação tempo x condição: possui efeito significativo (p-valor < 0.05)
+
+modelo_interleaved
+
+# ANOVA mista - Análise da percepção dos participantes referente à prática
+# de estudos intercalada, olhando apenas para o grupo de intervenção
+
+# H0: a influência do tempo, nos participantes do grupo de intervenção,
+# na percepção de eficácia da prática de estudos intercalada é dada ao acaso
+
+# Ha: nos participantes do grupo de intervenção, o tempo teve influência
+# na percepção de eficácia da prática de estudos intercalada
+
+modelo_interleaved_interv
+
+# ANOVA mista - Análise da percepção dos participantes referente à prática
+# de estudos intercalada, olhando apenas para o grupo controle
+
+
+# H0: a influência do tempo, nos participantes do grupo controle,
+# na percepção de eficácia da prática de estudos intercalada é dada ao acaso
+
+# Ha: nos participantes do grupo controle, o tempo teve influência
+# na percepção de eficácia da prática intercalada
+
+modelo_interleaved_control
+```
+
+**1.3 - Comparações pareadas com *Bonferroni***
+
+-   **Prática de estudos em bloco**
+
+```{r}
+# Pós-intervenção
+dados_post = subset(dados_ANOVA_RQ1, tempo == "post-intervention")
+
+# Valores de média e desvio padrão para o grupo controle
+media_percepcao_eficacia_pratica_bloco_grupo_controle_post = mean(na.omit(
+  dados_post$percep_blocked[dados_post$condicao == "Control"]))
+
+desvio_padrao_percepcao_eficacia_pratica_bloco_grupo_controle_post = sd(
+  na.omit(
+  dados_post$percep_blocked[dados_post$condicao == "Control"]))
+
+c(round(media_percepcao_eficacia_pratica_bloco_grupo_controle_post, 2),
+round(desvio_padrao_percepcao_eficacia_pratica_bloco_grupo_controle_post, 2))
+
+# Valores de média e desvio padrão para o grupo de intervenção
+media_percepcao_eficacia_pratica_bloco_grupo_intervencao_post = mean(na.omit(
+  dados_post$percep_blocked[dados_post$condicao == "Full"]))
+
+desvio_padrao_percepcao_eficacia_pratica_bloco_grupo_intervencao_post = sd(
+  na.omit(
+  dados_post$percep_blocked[dados_post$condicao == "Full"]))
+
+c(round(media_percepcao_eficacia_pratica_bloco_grupo_intervencao_post, 2),
+round(
+  desvio_padrao_percepcao_eficacia_pratica_bloco_grupo_intervencao_post, 2))
+
+# Após a intervenção, a percepção da eficácia da prática de estudos em blocos,
+# pelos participantes, foi diferente entre os grupos controle e intervenção,
+# sendo maior no grupo controle.
+
+(t_post_blocked = t.test(percep_blocked ~ condicao,
+                         data = dados_post, var.equal = TRUE) )
+
+# Após o delay
+dados_delay = subset(dados_ANOVA_RQ1, tempo == "after a delay")
+
+# Valores de média e desvio padrão para o grupo controle
+media_percepcao_eficacia_pratica_bloco_grupo_controle_delay = mean(na.omit(
+  dados_delay$percep_blocked[dados_post$condicao == "Control"]))
+
+desvio_padrao_percepcao_eficacia_pratica_bloco_grupo_controle_delay = sd(
+  na.omit(
+  dados_delay$percep_blocked[dados_post$condicao == "Control"])
+  )
+
+c(round(media_percepcao_eficacia_pratica_bloco_grupo_controle_delay, 2),
+round(desvio_padrao_percepcao_eficacia_pratica_bloco_grupo_controle_delay, 2))
+
+# Valores de média e desvio padrão para o grupo de intervenção
+media_percepcao_eficacia_pratica_bloco_grupo_intervencao_delay = mean(na.omit(
+  dados_delay$percep_blocked[dados_post$condicao == "Full"]))
+
+desvio_padrao_percepcao_eficacia_pratica_bloco_grupo_intervencao_delay = sd(
+  na.omit(
+  dados_delay$percep_blocked[dados_post$condicao == "Full"]))
+
+c(round(media_percepcao_eficacia_pratica_bloco_grupo_intervencao_delay, 2),
+round(
+  desvio_padrao_percepcao_eficacia_pratica_bloco_grupo_intervencao_delay, 3))
+
+# Após um período pós-intervenção, a percepção da eficácia da prática
+# de estudos em blocos, pelos participantes, foi diferente entre os grupos
+# controle e intervenção, sendo novamente maior no grupo controle.
+
+(t_delay_blocked = t.test(percep_blocked ~ condicao,
+                          data = dados_delay, var.equal = TRUE) )
+```
+
+-   **Prática de estudos intercalada**
+
+```{r}
+# Pós intervenção
+
+# Valores de média e desvio padrão para o grupo controle
+media_percepcao_eficacia_pratica_intercal_grupo_controle_post = mean(na.omit(
+  dados_post$percep_interleaved[dados_post$condicao == "Control"]))
+
+desvio_padrao_percepcao_eficacia_pratica_intercal_grupo_controle_post = sd(
+  na.omit(dados_post$percep_interleaved[dados_post$condicao == "Control"]))
+
+c(round(media_percepcao_eficacia_pratica_intercal_grupo_controle_post, 2),
+round(desvio_padrao_percepcao_eficacia_pratica_intercal_grupo_controle_post, 2))
+
+# Valores de média e desvio padrão para o grupo de intervenção
+media_percepcao_eficacia_pratica_intercal_grupo_intervencao_post = mean(
+  na.omit(
+  dados_post$percep_interleaved[dados_post$condicao == "Full"]))
+
+desvio_padrao_percepcao_eficacia_pratica_intercal_grupo_intervencao_post = sd(
+  na.omit(dados_post$percep_interleaved[dados_post$condicao == "Full"]))
+
+c(round(media_percepcao_eficacia_pratica_intercal_grupo_intervencao_post, 2),
+round(
+  desvio_padrao_percepcao_eficacia_pratica_intercal_grupo_intervencao_post,
+  2))
+
+# Após a intervenção, a percepção da eficácia da prática de estudos
+# intercalada, pelos participantes, foi diferente entre os grupos
+# controle e intervenção, sendo maior no grupo de intervenção.
+
+(t_post_interleaved = t.test(percep_interleaved ~ condicao,
+                             data = dados_post, var.equal = TRUE) )
+
+# Depois de um delay
+
+# Valores de média e desvio padrão para o grupo controle
+media_percepcao_eficacia_pratica_intercal_grupo_controle_delay = mean(na.omit(
+  dados_delay$percep_interleaved[dados_delay$condicao == "Control"]))
+
+desvio_padrao_percepcao_eficacia_pratica_intercal_grupo_controle_delay = sd(
+  na.omit(dados_delay$percep_interleaved[dados_delay$condicao == "Control"]))
+
+c(round(media_percepcao_eficacia_pratica_intercal_grupo_controle_delay, 2),
+round(
+  desvio_padrao_percepcao_eficacia_pratica_intercal_grupo_controle_delay, 2))
+
+# Valores de média e desvio padrão para o grupo de intervenção
+media_percepcao_eficacia_pratica_intercal_grupo_intervencao_delay = mean(
+  na.omit(
+  dados_delay$percep_interleaved[dados_delay$condicao == "Full"]))
+
+desvio_padrao_percepcao_eficacia_pratica_intercal_grupo_intervencao_delay = sd(
+  na.omit(
+    dados_delay$percep_interleaved[dados_delay$condicao == "Full"]))
+
+c(round(media_percepcao_eficacia_pratica_intercal_grupo_intervencao_delay, 2),
+round(
+  desvio_padrao_percepcao_eficacia_pratica_intercal_grupo_intervencao_delay,
+  2))
+
+# Após um período pós-intervenção, a percepção da eficácia da prática de
+# estudos intercalada, pelos participantes, foi diferente entre os grupos
+# controle e intervenção, sendo novamente maior no grupo de intervenção.
+
+(t_delay_interleaved = t.test(percep_interleaved ~ condicao,
+                              data = dados_delay, var.equal = TRUE) )
+```
+
+### *RQ2. The use of interleaved practice across time and between conditions*
+
+> Como o uso da prática de estudos intercalada variou com o tempo e entre os diferentes grupos (controle e experimental)?
+
+Esta RQ avaliou a influência das variáveis de **tempo** e **condição** no uso da prática de estudos intercalada. Para isso, foram aplicados três testes estatísticos:
+
+- **Teste t para uma amostra**: para analisar se a preferência da prática de estudos em bloco pelos estudantes, em detrimento à prática intercalada, é dada ao acaso;
+
+- **ANOVA mista**: para observar a variância ao longo do tempo do uso da prática de estudo intercalada, separando por grupo intervenção e grupo controle;
+
+- **Comparações pareadas com Bonferroni**
+
+Seguindo para a aplicação dos testes:
+
+**2.1 - Teste t para uma amostra**
+
+```{r}
+# Primeiramente, antes de aplicar o teste t, verificaremos
+# a diferença entre as frequências de uso entre as
+# duas práticas de estudo (por blocos e intercalada)
+
+# Proporção de trocas
+freq_interleaved_trials = mean(dados$`sw.1`)
+
+freq_blocked_trials = 1 - freq_interleaved_trials
+
+c(round(freq_blocked_trials, 2),
+round(freq_interleaved_trials, 2))
+```
+
+Pelos dados obtidos, observamos que a frequência de uso das práticas de estudo em bloco é maior que a frequência de uso das práticas de estudo intercalado.
+
+Mas esta diferença nas frequências seria dada ao acaso? Isto é, o uso da prática de estudos em bloco é intencional?
+
+```{r}
+# Aplicação do teste t
+# Dados de preferências pela prática de estudos em blocos pelos estudantes
+# vai de 0 a 1
+blocked_trial_preference_pre_intervention = 1 - dados$`sw.1`
+
+# Média e desvio padrão
+c(mean(blocked_trial_preference_pre_intervention),
+sd(blocked_trial_preference_pre_intervention))
+
+# Verificar se atende a premissa
+# Não passou no teste de normalidade
+shapiro.test(blocked_trial_preference_pre_intervention)
+
+# Teste t para uma amostra
+# H0: mu = 0.16 (a média observada é igual a 0,16)
+# Ha: mu != 0.16 (a média observada é diferente de 0,16)
+
+# O valor 0.16 refere-se ao valor esperado para a escolha
+# de uma categoria aleatória.
+# Como o estudo foi realizado com 6 diferentes categorias,
+# então E(X) = 1/6 (aprox. 0.16).
+
+muH0 = 0.16
+t.test(blocked_trial_preference_pre_intervention, mu = muH0)
+```
+
+Rejeitamos a hipótese nula ($H_0$) de que a média do uso de práticas de estudo em blocos é igual a $0.16$.
+
+A média observada ($0.57$) é significativamente diferente de $0.16$, com um p-valor muito baixo ($< 2.2 \times 10^{-16}$), indicando que o uso de práticas de estudo em blocos na pré-intervenção não pode ser explicado apenas pelo acaso.
+
+**2.2 - ANOVA mista**
+
+Antes de utilizar o modelo de ANOVA, é necessário preparar os dados:
+
+```{r}
+# Dados transformados para a ANOVA da RQ2
+dados_ANOVA_RQ2 = data.frame(
+    rep(dados$DM08_01, 3),
+    c(rep('pre-intervention', 91), rep('post-intervention', 91),
+      rep('after a delay', 91)),
+    c(dados$nsw_1, dados$nsw_2, dados$nsw_3),
+    c(dados$`sw.1`, dados$`sw.2`, dados$`sw.3`),
+    c(dados$PE_B1, dados$PE_B2, dados$PE_B3),
+    c(dados$PE_I1, dados$PE_I2, dados$PE_I3),
+    rep(dados$Condition, 3)
+)
+colnames(dados_ANOVA_RQ2) = c("id", "tempo", "numero_trocas",
+"proporcao_trocas", "percep_blocked", "percep_interleaved",
+"condicao")
+```
+
+Agora, conseguimos criar os modelos ANOVA:
+
+```{r}
+# Usando a função aov_ez para realizar a ANOVA mista 2x3
+
+# A proporção de trocas refere-se à proporção de
+# uso da prática de estudos intercalada
+
+# Função do usuário
+#modelo_RQ2 = rodar_anova(dv="proporcao_trocas", dados_ANOVA_RQ2)
+
+# Função da biblioteca afex
+modelo_RQ2 = aov_ez(id = "id",
+                     dv = "proporcao_trocas",
+                     within = "tempo",
+                     between = "condicao",
+                     data = dados_ANOVA_RQ2)
+
+# Resumo do modelo
+modelo_RQ2
+```
+
+Pelo *output* do modelo e considerando um valor para o **nível de significância** ($\alpha = 5\% = 0.05$), foram obtidos os seguintes resultados:
+
+- A variável de **tempo** exerceu um efeito significativo no uso da prática de estudos intercalada ($p < 0.001$):
+> $F(1.50, 133.58) = 30.74$<br>
+> $p < \alpha →$ rejeição da hipótese nula
+
+<br>
+
+- A variável de **condição** exerceu um efeito significativo no uso da prática de estudos intercalada ($p = 0.008 < \alpha$):
+> $F(1, 89) = 7.48$<br>
+> $p < \alpha →$ rejeição da hipótese nula
+
+<br>
+
+- A interação das variáveis de **condição** e **tempo** (condição*tempo) exerceu um efeito significativo no uso da prática de estudos intercalada ($p < 0.001$):
+> $F(1.50, 133.58) = 9.00$<br>
+> $p < \alpha →$ rejeição da hipótese nula
+
+**2.3 - Comparações pareadas com *Bonferroni***
+
+1. O uso da prática intercalada no grupo de intervenção (*full*) após a intervenção foi diferente do grupo controle?
+2. Essa diferença também é encontrada após o *delay*?
+
+```{r}
+# Converter as variáveis para fatores
+dados_ANOVA_RQ2$tempo = factor(dados_ANOVA_RQ2$tempo,
+                                levels = c("pre-intervention",
+                                           "post-intervention",
+                                           "after a delay"))
+
+dados_ANOVA_RQ2$condicao = as.factor(dados_ANOVA_RQ2$condicao)
+
+# Para o momento pós-intervenção:
+dados_post = subset(dados_ANOVA_RQ2, tempo == "post-intervention")
+resultado_post = pairwise.t.test(dados_post$proporcao_trocas,
+                                    dados_post$condicao,
+                                    p.adjust.method = "bonferroni")
+print(resultado_post)
+#Pvalor 0.0037, bem menor que 0.05, então podemos dizer que
+# há diferença não explicada pelo acaso
+
+# Para o momento após um atraso:
+dados_delay = subset(dados_ANOVA_RQ2, tempo == "after a delay")
+resultado_delay = pairwise.t.test(dados_delay$proporcao_trocas,
+                                     dados_delay$condicao,
+                                     p.adjust.method = "bonferroni")
+print(resultado_delay)
+
+# Pvalor de 0.0003, menor que 0.05, então podemos dizer que
+# há diferença não explicada pelo acaso
+```
+
+### *RQ3. The influence of interleaved practice on classification accuracy*
+
+> A prática de estudos intercalada possui algum efeito sobre a acurácia de classificação?
+
+- Verificando se os diferentes grupos (controle e experimental) possuem algum efeito sobre a performance de classificação, nas tarefas controladas pelo experimentador (*experimented-controlled learning tasks*).
+
+```{r}
+# Converter a variável de condição para fator
+dados$Condition = as.factor(dados$Condition)
+
+# Teste t comparando a acurácia das tarefas controladas pelo
+# experimentador entre os diferentes grupos (controle e experimental)
+
+teste_control = t.test(test.b + test.i ~ Condition,
+                       data = dados, var.equal = TRUE)
+
+teste_control
+
+# Os grupos não possuem efeitos sobre a acurácia das tarefas de aprendizagem
+# controladas pelo experimentador.
+```
+
+- Nas tarefas controladas pelo experimentador, houve diferença na acurácia de classificação entre as diferentes estratégias de aprendizagem?
+
+```{r}
+# Teste t pareado comparando a acurácia para prática intercalada (test.i)
+# versus bloqueada (test.b)
+teste_pareado = t.test(dados$test.i, dados$test.b, paired = TRUE)
+print(teste_pareado)
+
+media_interleaved = mean(dados$test.i, na.rm = TRUE)
+dp_interleaved = sd(dados$test.i, na.rm = TRUE)
+media_blocked = mean(dados$test.b, na.rm = TRUE)
+dp_blocked = sd(dados$test.b, na.rm = TRUE)
+
+cat("Prática intercalada: M =", round(media_interleaved,2), "DP =",
+    round(dp_interleaved,2), "\n")
+cat("Prática bloqueada: M =", round(media_blocked,2), "DP =",
+    round(dp_blocked,2), "\n")
+
+# Como a diferença média encontrada foi 2.989 e o p-valor foi muito baixo,
+# podemos afirmar que essa diferença não se deve ao acaso.
+```
+
+- Nos casos em que os estudantes definiram suas próprias ordens de estudo, quais variáveis influenciaram a performance de classificação?
+
+> Uso de um modelo de ANOVA mista para verificar se as condições de controle e intervenção diferiam em termos de desempenho de classificação
+
+Antes de utilizar o modelo ANOVA, é necessária a preparação dos dados:
+
+```{r}
+# Dados transformados para o teste t da RQ3
+dados_teste_t_RQ3 = data.frame(
+  id = rep(dados_limpos$DM08_01, 2),
+  tempo = rep(c("post-intervention", "after a delay"), each = 89),
+  score_teste_experimental_controlado = c(dados_limpos$test.i,
+                                          dados_limpos$test.b),
+  precisao = c(dados_limpos$dist.post, dados_limpos$dist.delay),
+  condicao = rep(dados_limpos$Condition, 2)
+)
+
+# Dados transformados para a ANOVA da RQ3
+n = nrow(dados)
+
+dados_ANOVA_RQ3 = data.frame(
+  id = rep(dados$DM08_01, 2),
+  tempo = rep(c("post-intervention", "after a delay"), each = n),
+  score_teste_auto_controlado = c(dados$test2, dados$test3),
+  precisao = c(dados$dist.post, dados$dist.delay),
+  condicao = rep(dados$Condition, 2)
+)
+
+dados_ANOVA_RQ3$id = as.factor(dados_ANOVA_RQ3$id)
+dados_ANOVA_RQ3$tempo = factor(dados_ANOVA_RQ3$tempo,
+                                levels = c("post-intervention",
+                                           "after a delay"))
+dados_ANOVA_RQ3$condicao = as.factor(dados_ANOVA_RQ3$condicao)
+```
+
+Agora, partindo para a criação do modelo:
+
+```{r}
+modelo_RQ3 = aov_ez(id = "id",
+                     dv = "score_teste_auto_controlado",
+                     between = "condicao",
+                     within = "tempo",
+                     data = dados_ANOVA_RQ3)
+
+# Output do modelo
+modelo_RQ3
+```
+
+Pelos *outputs* do modelo e considerando um valor para o **nível de significância** ($\alpha = 5\% = 0.05$), foram obtidos os seguintes resultados:
+
+- A variável de **tempo** não exerceu um efeito significativo na performance de classificação dos testes, nos quais as ordens de estudo foram definidas pelos estudantes ($p = 0.129$):
+> $F(1, 89) = 2.35$<br>
+> $p > \alpha →$ aceitação da hipótese nula
+
+<br>
+
+- A variável de **condição** não exerceu um efeito significativo na performance de classificação dos testes, nos quais as ordens de estudo foram definidas pelos estudantes ($p = 0.222$):
+> $F(1, 89) = 1.51$<br>
+> $p > \alpha →$ aceitação da hipótese nula
+
+<br>
+
+- A interação das variáveis de **condição** e **tempo** (condição*tempo) não exerceu um efeito significativo na performance de classificação dos testes, nos quais as ordens de estudo foram definidas pelos estudantes ($p = 0.205$):
+> $F(1, 89) = 1.63$<br>
+> $p > \alpha →$ aceitação da hipótese nula
+
+## Figuras
+
+**RQ1. Como a crença dos participantes nas diferentes estratégias de estudo se comportou ao longo do tempo?**
+
+- Figura do autor
+
+![Perceived effectiveness of blocked and interleaved practice across learning tasks]("G:\Meu Drive\UFABC\BC&T\8º quad\Bioestatística\bioestatistica_projeto_final\arquivos_importantes_projeto_dados_imagens\Imagens\grafico_RQ1.png"){width="12cm"}
+
+- Figuras autorais
+
+```{r echo=FALSE}
+# Etapa 0: Definir ordem correta dos níveis
+dados_ANOVA_RQ1$tempo <- factor(dados_ANOVA_RQ1$tempo, levels = c(
+  "pre-intervention", "post-intervention", "after a delay"))
+
+# Etapa 1: Calcular médias por tempo
+tempo_niveis <- levels(dados_ANOVA_RQ1$tempo)
+
+media_blocked_control <- tapply(
+  dados_ANOVA_RQ1$percep_blocked[
+    dados_ANOVA_RQ1$condicao == "Control"],
+    dados_ANOVA_RQ1$tempo[dados_ANOVA_RQ1$condicao == "Control"],
+  mean)
+
+media_blocked_interv <- tapply(
+  dados_ANOVA_RQ1$percep_blocked[
+    dados_ANOVA_RQ1$condicao == "Full"],
+    dados_ANOVA_RQ1$tempo[dados_ANOVA_RQ1$condicao == "Full"], mean)
+
+media_interleaved_control <- tapply(
+  dados_ANOVA_RQ1$percep_interleaved[
+    dados_ANOVA_RQ1$condicao == "Control"],
+    dados_ANOVA_RQ1$tempo[dados_ANOVA_RQ1$condicao == "Control"], mean)
+
+media_interleaved_interv <- tapply(
+  dados_ANOVA_RQ1$percep_interleaved[dados_ANOVA_RQ1$condicao == "Full"],
+                                   dados_ANOVA_RQ1$tempo[
+                                     dados_ANOVA_RQ1$condicao == "Full"], mean)
+
+# Etapa 2: Transformar nomes dos níveis em posições no eixo x
+x <- 1:length(tempo_niveis)
+
+# Etapa 3: Plot dos gráficos
+
+# Gráfico 1: Prática por Bloco
+plot(x, media_blocked_control, type = "b", pch = 16, col = "red",
+     ylim = c(0, 6), xaxt = "n", xlab = "Tempo",
+     ylab = "Percepção de efetividade das estratégias de aprendizado",
+     main = "Prática de estudos por blocos")
+lines(x, media_blocked_interv, type = "b", pch = 17, col = "blue")
+axis(1, at = x, labels = tempo_niveis)
+legend("topright", legend = c("Controle", "Intervenção"),
+       col = c("red", "blue"), pch = c(16, 17), bty = "n")
+
+# Gráfico 2: Prática Intercalada
+plot(x, media_interleaved_control, type = "b", pch = 16, col = "red",
+     ylim = c(0, 6), xaxt = "n", xlab = "Tempo",
+     ylab = "Percepção de efetividade das estratégias de aprendizado",
+     main = "Prática de estudos intercalada")
+lines(x, media_interleaved_interv, type = "b", pch = 17, col = "blue")
+axis(1, at = x, labels = tempo_niveis)
+legend("topright", legend = c("Controle", "Intervenção"),
+       col = c("red", "blue"), pch = c(16, 17), bty = "n")
+```
+
+**RQ3. A prática de estudos intercalada possui algum efeito sobre a acurácia de classificação?**
+
+- Figura do autor
+
+![The use of interleaved practice (in proportions) across learning tasks]("G:\Meu Drive\UFABC\BC&T\8º quad\Bioestatística\bioestatistica_projeto_final\arquivos_importantes_projeto_dados_imagens\Imagens\grafico_RQ1.png"){width="12cm"}
+
+- Figura autoral
+
+```{r echo=FALSE}
+# Etapa 0: Definir ordem correta dos níveis
+dados_ANOVA_RQ2$tempo <- factor(dados_ANOVA_RQ2$tempo,
+                                levels = c("pre-intervention",
+                                           "post-intervention",
+                                           "after a delay"))
+
+# Etapa 1: Calcular médias por tempo
+tempo_niveis <- levels(dados_ANOVA_RQ2$tempo)
+
+media_uso_interleaved_control <- tapply(
+  dados_ANOVA_RQ2$proporcao_trocas[
+    dados_ANOVA_RQ2$condicao == "Control"],
+    dados_ANOVA_RQ2$tempo[dados_ANOVA_RQ2$condicao == "Control"], mean)
+
+media_uso_interleaved_interv <- tapply(
+  dados_ANOVA_RQ2$proporcao_trocas[
+    dados_ANOVA_RQ2$condicao == "Full"],
+    dados_ANOVA_RQ2$tempo[dados_ANOVA_RQ2$condicao == "Full"], mean)
+
+# Etapa 2: Transformar nomes dos níveis em posições no eixo x
+x <- 1:length(tempo_niveis)
+
+# Gráfico 1: Prática Intercalada
+plot(x, media_uso_interleaved_control, type = "b", pch = 16, col = "red",
+     ylim = c(0, 1), xaxt = "n", xlab = "Tempo",
+     ylab = "Uso da prática intercalada",
+     main = "Uso relativizado da prática de estudos intercalada")
+lines(x, media_uso_interleaved_interv, type = "b", pch = 17, col = "blue")
+axis(1, at = x, labels = tempo_niveis)
+legend("topright", legend = c("Controle", "Intervenção"),
+       col = c("red", "blue"), pch = c(16, 17), bty = "n")
+```
+
+## Conclusões
+
+Através dessa pesquisa, é possível visualizar que existem diferentes formas de estudo, sendo que algumas se apresentam mais eficazes em detrimento de outras. Os autores apontam que a refutação foi uma estratégia conveniente do processo, por ter “forçado” os estudantes a questionarem-se e assim, entender de fato um determinado assunto.
+
+Assim, torna-se viável que o método aplicado nessa pesquisa seja utilizado por universitários (ou estudantes, de um modo geral). É relevante mencionar que quando existe um interesse particular - ou o oposto - em uma categoria estudada, o comportamento dos estudantes frente aos estudos pode apresentar variações. Ademais, os autores sugerem que pesquisas futuras podem averiguar a eficácia da metodologia em situações cotidianas.

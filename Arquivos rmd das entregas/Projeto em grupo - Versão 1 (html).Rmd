@@ -1,0 +1,63 @@
+---
+title: "Projeto em grupo - Versão 1"
+author: "Bruno Augusto Soares Gallani<br>RA: 11202230282<br><br>Julia Kohn<br>RA: 11202130099<br><br>Rebeca Oliveira de Souza<br>RA: 11202230597"
+output: html_document
+---
+
+## Informações iniciais
+
+- **Título do artigo:** *“Optimizing self-organized study orders: combining refutations and metacognitive prompts improves the use of interleaved practice”*
+
+- **Link do artigo:** <https://www.nature.com/articles/s41539-024-00245-7>
+
+- **Dados:** <https://osf.io/6vm7z/?view_only=d9caf564f48b4c4f8166b3c2e38c1cf4>
+
+- **Dicionário dos dados:** <https://dataverse.nl/dataset.xhtml?persistentId=doi:10.34894/U9YSER>
+
+## Contextualização
+
+O artigo discute sobre a organização de estudos durante a aprendizagem por categorias e suas práticas: a prática intercalada (*interleaved practice*), que consiste na alternância de estudo entre diferentes categorias/conceitos, e a prática por blocos (*blocked practice*), que consiste no estudo de uma categoria/conceito por vez.
+
+A prática de estudo por blocos costuma ser frequentemente escolhida pelos estudantes, em detrimento da prática intercalada, mas pesquisas recentes passaram a informar que a prática intercalada é uma estratégia mais efetiva.
+
+Nesse contexto, diversos estudos são realizados a partir de testes com estudantes, testes esses que pré definem uma ordem de estudos. Mas nunca houve um teste que fosse realizado de forma que os próprios estudantes definissem uma ordem de estudos para eles mesmos. Nesse sentido, foi realizado neste artigo um experimento com 91 estudantes universitários, que consistiu nas seguintes etapas:
+
+- Divisão dos estudantes em grupos controle e teste;
+
+- Exposição dos estudantes do grupo de teste a intervenções: que consistiram na leitura de textos e avisos metacognitivos que destacam a superioridade da prática intercalada de estudos em detrimento à prática por blocos, ou seja, refutações do que comumente acreditam.
+
+## Resultados
+
+Feitos os experimentos, foi observado que os estudantes, antes das intervenções, utilizaram mais a prática de estudo por blocos, e depois das intervenções, o uso da prática intercalada de estudo aumentou significativamente. Essa relação pode ser observada pela figura abaixo:
+
+<img src="G:/Meu Drive/UFABC/BC&T/8º quad/Bioestatística/[Bioestatística] Projeto final/Arquivos importantes do projeto (dados, imagens...)/Imagens/figura_resultados_projeto_ver_1.png" width="50%" alt="Figura 2">
+
+Esse maior uso da prática intercalada de estudo fez com que os estudantes performassem melhor, isto é, fossem bem classificados, salientando que, diferente do que a maior parte dos estudantes pensam, a prática intercalada é mais efetiva que a por blocos.
+
+## Conclusões
+
+Através dessa pesquisa, é possível visualizar que existem diferentes formas de estudo, sendo que algumas se apresentam mais eficazes em detrimento de outras. Os autores apontam que a refutação foi uma estratégia conveniente do processo, por ter “forçado” os estudantes a questionarem-se e assim, entender de fato um determinado assunto.
+
+Assim, torna-se viável que o método aplicado nessa pesquisa seja utilizado por universitários (ou estudantes, de um modo geral). É relevante mencionar que quando existe um interesse particular - ou o oposto - em uma categoria estudada, o comportamento dos estudantes frente aos estudos pode apresentar variações. Ademais, os autores sugerem que pesquisas futuras podem averiguar a eficácia da metodologia em situações cotidianas.
+
+## Prints
+
+- Lista de arquivos
+
+<img src="G:/Meu Drive/UFABC/BC&T/8º quad/Bioestatística/[Bioestatística] Projeto final/Arquivos importantes do projeto (dados, imagens...)/Imagens/lista_arquivos_print_1.png" width="100%" alt="Print 1 - Lista de arquivos">
+
+<img src="G:/Meu Drive/UFABC/BC&T/8º quad/Bioestatística/[Bioestatística] Projeto final/Arquivos importantes do projeto (dados, imagens...)/Imagens/lista_arquivos_print_2.png" width="100%" alt="Print 2 - Lista de arquivos"><br><br>
+
+* Base de dados - *S3.data.csv*
+
+Primeiras 13 linhas
+
+<img src="G:/Meu Drive/UFABC/BC&T/8º quad/Bioestatística/[Bioestatística] Projeto final/Arquivos importantes do projeto (dados, imagens...)/Imagens/primeiras_linhas_tabela.png" width="100%" alt="Primeiras linhas da tabela">
+
+Últimas 10 linhas
+
+<img src="G:/Meu Drive/UFABC/BC&T/8º quad/Bioestatística/[Bioestatística] Projeto final/Arquivos importantes do projeto (dados, imagens...)/Imagens/ultimas_linhas_tabela.png" width="100%" alt="Últimas linhas da tabela"><br><br>
+
+* Gráficos criados até o momento - extraídos do arquivo *Códigos colaborativos (em R).ipynb*
+
+<img src="G:/Meu Drive/UFABC/BC&T/8º quad/Bioestatística/[Bioestatística] Projeto final/Arquivos importantes do projeto (dados, imagens...)/Imagens/grafico_colunas_contagem_grupos.png" width="60%" alt="Gráfico de contagem de grupos (controle e teste)">
