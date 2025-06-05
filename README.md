@@ -13,4 +13,4 @@ Quanto aos arquivos complementares (RMarkdown) do trabalho e o script colaborati
 - <a href="./Arquivos rmd das entregas/Projeto em grupo - Versão 3/Projeto_em_grupo_versao-3 (pdf).Rmd"><b>_RMarkdown_ da versão final do projeto</b></a>;
 - <a href="./Códigos colaborativos (em R).ipynb"><b>Scripts colaborativos</b></a>.
 
-Os scripts colaborativos foram realizados no Google Colab: <a href="https://colab.research.google.com/drive/1Vc0jcUUUhSIJbnkkG0Crf4ykANIX--3u?usp=drive_link">https://bit.ly/4kreZQr</a>
+Os scripts colaborativos foram realizados no Google Colab: <a href="https://colab.research.google.com/drive/1Vc0jcUUUhSIJbnkkG0Crf4ykANIX--3u?usp=drive_link" target="_blank">https://bit.ly/4kreZQr</a>
